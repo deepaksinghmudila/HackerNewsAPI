@@ -7,53 +7,82 @@ const PATH_SEARCH = "/search";
 const PARAM_SEARCH = "query=";
 const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}`;
 
-//console.log(url);
-
-
-/*ES5
- function isSearched(searchTerm) {
-   return function (item) {
-     return item.title.toLowerCase().includes(searchTerm.toLowerCase());
-   };
- }
-*/
-
- /* ES6*/
-  const isSearched = (searchTerm) => (item) =>
-  item.title.toLowerCase().includes(searchTerm.toLowerCase()); 
-
+//console.log(url); 
  class App extends Component {
    constructor(props) {
      super(props);
      this.state = {
-       result:null ,
-       searchTerm: "",
+       result: null,
+       searchTerm: DEFAULT_QUERY,
      };
 
-     this.onDismiss = this.onDismiss.bind(this);
+     this.setSearchTopStories = this.setSearchTopStories.bind(this);
+     this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
      this.onSearchChange = this.onSearchChange.bind(this);
+     this.onSearchSubmit = this.onSearchSubmit.bind(this);
+     this.onDismiss = this.onDismiss.bind(this);
    }
 
-   onDismiss(id) {
-     const isNotId = (item) => item.objectID !== id;
-     const updatedList = this.state.list.filter(isNotId);
-     this.setState({ list: updatedList });
+   setSearchTopStories(result) {
+     this.setState({ result });
+   }
+
+   onSearchSubmit(event) {
+     const { searchTerm } = this.state;
+     this.fetchSearchTopStories(searchTerm);
+     event.preventDefault();
+   }
+
+   fetchSearchTopStories(searchTerm) {
+     fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}`)
+       .then((response) => response.json())
+       .then((result) => this.setSearchTopStories(result))
+       .catch((error) => error);
+   }
+
+   /* fetch the data from the Hacker News API asynchronously.  */
+   componentDidMount() {
+     const { searchTerm } = this.state;
+     this.fetchSearchTopStories(searchTerm); 
    }
 
    onSearchChange(event) {
      this.setState({ searchTerm: event.target.value });
    }
 
+   onDismiss(id) {
+     const isNotId = (item) => item.objectID !== id;
+     const updatedHits = this.state.result.hits.filter(isNotId);
+
+     this.setState({
+       result: { ...this.state.result, hits: updatedHits },
+     });
+   }
+
    render() {
-     const { searchTerm, list } = this.state;
+     const { searchTerm, result } = this.state;
+
+     if (!result) {
+       return null;
+     }
+
      return (
        <div className="page">
          <div className="interactions">
-           <Search value={searchTerm} onChange={this.onSearchChange}>
+           <Search
+             value={searchTerm}
+             onChange={this.onSearchChange}
+             onSubmit={this.onSearchSubmit}
+           >
              Search
            </Search>
          </div>
-         <Table list={list} pattern={searchTerm} onDismiss={this.onDismiss} />
+         {result ? (
+           <Table
+             list={result.hits}              
+             onDismiss={this.onDismiss}
+           />
+         ) : null}
        </div>
      );
    }
@@ -61,10 +90,18 @@ const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}`;
 
  export default App;
 
- const Search = ({ value, onChange, children }) => {
+ const Search = ({ value, onChange, onSubmit,children }) => {
    return (
-     <form>
-       {children} <input type="text" value={value} onChange={onChange} />
+     <form onSubmit={onSubmit}>
+       <input
+         type="text"
+         value={value}
+         onChange={onChange}          
+        />
+       <button
+         type="submit">
+         {children}
+       </button>
      </form>
    );
  };
@@ -77,11 +114,11 @@ const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}`;
    );
  };
 
- const Table = ({ list, pattern, onDismiss }) => {
+ const Table = ({ list, onDismiss }) => {
    const largeColumn = { width: "40%" };
    return (
      <div className="table">
-       {list.filter(isSearched(pattern)).map((item) => (
+       {list.map((item) => (
          <div key={item.objectID} className="table-row">
            <span style={largeColumn}>
              <a href={item.url}> {item.title}</a>
