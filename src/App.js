@@ -13,7 +13,8 @@ const PARAM_HPP = "hitsPerPage=";
 const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}&${PARAM_PAGE}`;
 
 //console.log(url); 
- class App extends Component {
+
+class App extends Component {
    constructor(props) {
      super(props);
      this.state = {
@@ -36,7 +37,8 @@ const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}&${PARAM_
      const updatedHits = [...oldHits, ...hits];
      this.setState({ result: { hits: updatedHits, page } });
   }
-
+   
+   
    onSearchSubmit(event) {
      const { searchTerm } = this.state;
      this.fetchSearchTopStories(searchTerm);
@@ -101,8 +103,9 @@ const url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}&${PARAM_
          </div>
        </div>
      );
-   }
+   }   
  }
+
 
  export default App;
 
